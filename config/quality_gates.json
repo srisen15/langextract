@@ -1,0 +1,41 @@
+{
+  "quality_gates": {
+    "max_failure_rate": 15.0,
+    "max_critical_failures": 0,
+    "max_high_priority_failures": 7,
+    "max_flaky_test_rate": 20.0,
+    "min_pass_rate": 80.0,
+    "max_timeout_failures": 3,
+    "max_data_issue_failures": 3,
+    "max_auth_failures": 1
+  },
+  "notification_thresholds": {
+    "slack_critical_threshold": 1,
+    "email_high_priority_threshold": 5,
+    "teams_daily_summary": true
+  },
+  "environments": {
+    "production": {
+      "max_failure_rate": 5.0,
+      "max_critical_failures": 0,
+      "max_high_priority_failures": 2
+    },
+    "staging": {
+      "max_failure_rate": 10.0,
+      "max_critical_failures": 0,
+      "max_high_priority_failures": 5
+    },
+    "development": {
+      "max_failure_rate": 20.0,
+      "max_critical_failures": 1,
+      "max_high_priority_failures": 10
+    }
+  },
+  "azure_blob_config": {
+    "container_name": "test-results",
+    "retention_days": 30,
+    "auto_cleanup": true,
+    "daily_analysis_time": "09:00",
+    "report_upload_prefix": "daily-reports/"
+  }
+}

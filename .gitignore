@@ -1,0 +1,81 @@
+# Test Log Analysis System - .gitignore
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual Environment
+test_analysis_env/
+venv/
+env/
+ENV/
+
+# Environment Variables
+.env
+.env.local
+.env.production
+
+# Output Files
+output/reports/*.csv
+output/reports/*.html
+output/reports/*.json
+output/reports/*.md
+output/logs/*.log
+output/azure_cache/
+output/daily_reports/
+
+# Temporary Files
+*.tmp
+*.temp
+*.log
+
+# IDE/Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+*.bak
+
+# Test Coverage
+htmlcov/
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+.pytest_cache/
+
+# Azure
+azure_cache/
+daily_reports/
+
+# Reports (keep structure, ignore content)
+reports/
+local_reports/

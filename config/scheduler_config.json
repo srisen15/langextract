@@ -1,0 +1,42 @@
+{
+  "schedule": {
+    "daily_time": "09:00",
+    "timezone": "UTC",
+    "days_back": 1
+  },
+  "azure_blob": {
+    "connection_string": "DefaultEndpointsProtocol=https;AccountName=your_account;AccountKey=your_key;EndpointSuffix=core.windows.net",
+    "container_name": "test-results",
+    "blob_prefix": "test-logs/",
+    "upload_reports": true
+  },
+  "notifications": {
+    "email": {
+      "enabled": false,
+      "smtp_server": "smtp.gmail.com",
+      "smtp_port": 587,
+      "username": "your_email@company.com",
+      "password": "your_app_password",
+      "recipients": [
+        "qa-team@company.com",
+        "dev-leads@company.com"
+      ]
+    },
+    "slack": {
+      "enabled": false,
+      "webhook_url": "https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK",
+      "channel": "#test-failures"
+    },
+    "teams": {
+      "enabled": false,
+      "webhook_url": "https://your-org.webhook.office.com/YOUR/TEAMS/WEBHOOK"
+    }
+  },
+  "quality_gates_file": "quality_gates.json",
+  "reports": {
+    "generate_html": true,
+    "generate_csv": true,
+    "generate_insights": true,
+    "export_metrics": true
+  }
+}

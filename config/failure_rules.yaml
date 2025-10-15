@@ -1,0 +1,117 @@
+# Test Failure Categorization Rules Configuration
+# This file allows you to customize how test failures are categorized
+
+failure_rules:
+  # Authentication/Authorization errors
+  authentication_error:
+    keywords: ['unauthorized', 'forbidden', 'authentication', 'login', 'credentials', '401', '403']
+    priority: 'High'
+    category: 'Authentication Error'
+    
+  # Timeout errors
+  timeout:
+    keywords: ['timeout', 'timed out', 'waiting for', 'page.waitfor']
+    priority: 'Medium'  # Will be High if not flaky
+    category: 'Timeout'
+    
+  # Element not found errors
+  element_not_found:
+    keywords: ['element not found', 'selector', 'locator', 'not visible', 'strict mode violation']
+    priority: 'Medium'
+    category: 'Element Not Found'
+    
+  # Network/API errors
+  network_error:
+    keywords: ['network', 'connection', 'fetch', 'api', 'http', '500', '502', '503', '504', 'cors']
+    priority: 'High'
+    category: 'Network/API Error'
+    
+  # Data/State issues (most common in your case)
+  data_issue:
+    keywords: ['submit failed', 'pending', 'status', 'state', 'validation failed', 'data inconsistency']
+    priority: 'High'
+    category: 'Data/State Issue'
+    
+  # Assertion failures
+  assertion_failure:
+    keywords: ['expect(', 'assertion', 'tocontain', 'tobe', 'toequal']
+    priority: 'Medium'
+    category: 'Assertion Failure'
+    
+  # Browser/Infrastructure errors
+  browser_error:
+    keywords: ['browser', 'page crash', 'navigation', 'protocol', 'chrome', 'chromium']
+    priority: 'Medium'
+    category: 'Browser/Infrastructure Error'
+    
+  # Environment issues
+  environment_issue:
+    keywords: ['environment', 'configuration', 'permission', 'file not found', 'path']
+    priority: 'Low'
+    category: 'Environment Issue'
+
+# Priority escalation rules
+escalation_rules:
+  # Escalate to Critical if multiple conditions are met
+  critical_conditions:
+    - high_priority_and_frequent: 
+        conditions: ['priority == High', 'retries > 2']
+    - authentication_in_prod:
+        conditions: ['category == Authentication Error', 'environment contains prod']
+    - data_corruption:
+        conditions: ['keywords contains data corruption', 'keywords contains database']
+        
+  # Escalate to High priority
+  high_priority_conditions:
+    - timeout_not_flaky:
+        conditions: ['category == Timeout', 'not flaky']
+    - api_errors:
+        conditions: ['category == Network/API Error']
+
+# Attention rules - which failures need immediate attention
+attention_rules:
+  immediate_attention:
+    - critical_priority: 'priority == Critical'
+    - high_priority: 'priority == High'
+    - authentication_errors: 'category == Authentication Error'
+    - data_issues: 'category == Data/State Issue'
+    - non_flaky_timeouts: 'category == Timeout and not flaky'
+    
+# Flaky test detection rules
+flaky_detection:
+  indicators:
+    - retries_count: 'retries > 0'
+    - flaky_flag: 'flaky == true'
+    - intermittent_keywords: ['sometimes', 'intermittent', 'randomly']
+    
+# Environment classification
+environment_patterns:
+  production: ['prod', 'production', 'live']
+  staging: ['stage', 'staging', 'uat']
+  development: ['dev', 'development', 'local']
+  testing: ['test', 'qa', 'testing']
+
+# Custom tags for specific test types
+test_type_tags:
+  integration: ['integration', 'e2e', 'end-to-end']
+  api: ['api', 'rest', 'graphql']
+  ui: ['ui', 'frontend', 'web']
+  performance: ['performance', 'load', 'stress']
+  security: ['security', 'auth', 'permissions']
+  
+# Report customization
+reporting:
+  max_items_in_summary: 10
+  failure_threshold_warning: 10  # Warn if failure rate > 10%
+  flaky_threshold_warning: 5     # Warn if flaky tests > 5
+  
+# Notification rules (for future integration)
+notifications:
+  slack_channels:
+    critical: '#critical-test-failures'
+    high_priority: '#test-failures'
+    flaky_tests: '#flaky-tests'
+    
+  email_groups:
+    critical: ['dev-leads@company.com', 'qa-leads@company.com']
+    high_priority: ['qa-team@company.com']
