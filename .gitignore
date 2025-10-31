@@ -43,10 +43,42 @@ output/logs/*.log
 output/azure_cache/
 output/daily_reports/
 
+# Enhanced Analyzer Output (NEW)
+src/utils/output/
+src/utils/output/reports/
+**/enhanced_report_*.md
+**/business_impact_report_*.md
+**/enhanced_analysis_*.json
+**/enhanced_tests_*.csv
+
+# Test Results & Sample Data
+test_results/
+test-results/
+Downloads/test*results/
+samples/downloaded_*.json
+samples/real_test_*.json
+
+# Analysis Cache & Temporary Files
+.analysis_cache/
+analysis_temp/
+temp_analysis/
+
 # Temporary Files
 *.tmp
 *.temp
 *.log
+*.backup
+*.orig
+*.rej
+*.swp~
+
+# Development & Debug Files (NEW)
+debug_*.py
+test_*.py
+experimental_*.py
+temp_*.py
+scratch_*.py
+local_test_*.py
 
 # IDE/Editor
 .vscode/
@@ -55,10 +87,29 @@ output/daily_reports/
 *.swo
 *~
 
+# Jupyter Notebooks (NEW)
+.ipynb_checkpoints/
+*.ipynb
+
+# VS Code Specific (NEW)
+.vscode/settings.json
+.vscode/launch.json
+.vscode/extensions.json
+
 # OS
 .DS_Store
 Thumbs.db
 *.bak
+
+# Windows Specific (NEW)
+Desktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+*.lnk
 
 # Test Coverage
 htmlcov/
@@ -79,3 +130,29 @@ daily_reports/
 # Reports (keep structure, ignore content)
 reports/
 local_reports/
+
+# Security & Configuration (NEW)
+secrets.json
+.secrets
+config/local_*.json
+config/dev_*.json
+config/*.local.json
+
+# Large Files & Archives (NEW)
+*.zip
+*.rar
+*.7z
+*.tar.gz
+*.tar
+large_datasets/
+bulk_test_results/
+
+# Machine Learning Models (if any)
+*.pkl
+*.pickle
+*.model
+*.weights
+
+# Documentation Build
+docs/_build/
+docs/site/

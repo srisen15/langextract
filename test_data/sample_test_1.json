@@ -1,0 +1,8 @@
+{
+  "test_name": "login_authentication_test",
+  "status": "failed",
+  "duration": 5500,
+  "failure_reason": "Authentication failed: Invalid credentials provided for user test@example.com",
+  "test_file": "auth/login.spec.js",
+  "environment": "dev-linuxaa8d0014O1"
+}

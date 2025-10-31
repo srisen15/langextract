@@ -1,0 +1,8 @@
+{
+  "test_name": "page_load_timeout_test",
+  "status": "failed",
+  "duration": 32000,
+  "failure_reason": "Timeout: Page did not load within 30 seconds. Network may be slow.",
+  "test_file": "performance/page-load.spec.js",
+  "environment": "qa-server-east-region"
+}

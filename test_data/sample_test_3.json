@@ -1,0 +1,8 @@
+{
+  "test_name": "api_network_error_test",
+  "status": "failed",
+  "duration": 8000,
+  "failure_reason": "Network error: Failed to fetch data from API endpoint /api/users - Connection refused",
+  "test_file": "api/users.spec.js",
+  "environment": "staging-webserver01"
+}

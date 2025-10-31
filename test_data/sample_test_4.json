@@ -1,0 +1,8 @@
+{
+  "test_name": "successful_checkout_test",
+  "status": "passed",
+  "duration": 4500,
+  "failure_reason": null,
+  "test_file": "e2e/checkout.spec.js",
+  "environment": "qa-server-west"
+}
