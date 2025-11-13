@@ -116,6 +116,8 @@ python -m src.utils.local_analyzer --input "C:\test-results" --notify
 - 🔍 **Failure Pattern Detection**: Identifies common error patterns and root causes
 - 📊 **Executive Dashboard**: Business impact reports with risk assessment
 - 💡 **Actionable Insights**: Specific debugging recommendations for each failure
+- 🔐 **Enhanced HTTP Status Handling**: Specialized 401/403 authentication & authorization categorization
+- 🌐 **Smart API Error Detection**: Detailed categorization of 404, 500, 502, 503, 504 errors
 
 ### **☁️ Azure Automation** (Enterprise deployment)
 Automated daily processing from Azure Blob Storage with stakeholder notifications.
@@ -149,17 +151,18 @@ python -m src.integrations.enhanced_ci_integration --enforce-quality-gates
 
 ## 📊 Analysis Categories
 
-| Category | Priority | Description | Example |
-|----------|----------|-------------|---------|
-| 🔐 **Authentication Error** | Critical | Login/auth failures | Token expired |
-| 🛡️ **Data Corruption** | Critical | Data integrity issues | Database corruption |
-| 🌐 **Network/API Error** | High | Connection issues | API timeout |
-| ⏱️ **Timeout** | High | Execution timeouts | Page load timeout |
-| 📄 **Data/State Issue** | Medium | Data inconsistencies | Missing test data |
-| 🎯 **UI Element Not Found** | Medium | Missing page elements | Button not found |
-| ⚙️ **Configuration Error** | Medium | Environment issues | Wrong URL config |
-| 🔧 **Test Infrastructure** | Low | Framework issues | Browser crash |
-| 🔄 **Flaky Test** | Low | Intermittent failures | Race condition |
+| Category | Priority | Description | Example | HTTP Status |
+|----------|----------|-------------|---------|-------------|
+| 🔐 **Authentication Error** | Critical | Login/auth failures (401) | Token expired, invalid credentials | 401 Unauthorized |
+| 🛡️ **Authorization Error** | Critical | Permission failures (403) | Insufficient privileges, role mismatch | 403 Forbidden |
+| 🛡️ **Data Corruption** | Critical | Data integrity issues | Database corruption | N/A |
+| 🌐 **Network/API Error** | High | Connection & HTTP issues | API timeout, 500/404 errors | 404, 500, 502, 503, 504 |
+| ⏱️ **Timeout** | High | Execution timeouts | Page load timeout | N/A |
+| 📄 **Data/State Issue** | Medium | Data inconsistencies | Missing test data | N/A |
+| 🎯 **UI Element Not Found** | Medium | Missing page elements | Button not found | N/A |
+| ⚙️ **Configuration Error** | Medium | Environment issues | Wrong URL config | N/A |
+| 🔧 **Test Infrastructure** | Low | Framework issues | Browser crash | N/A |
+| 🔄 **Flaky Test** | Low | Intermittent failures | Race condition | N/A |
 
 ---
 

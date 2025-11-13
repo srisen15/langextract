@@ -1,0 +1,8 @@
+{
+  "test_name": "api_401_unauthorized_test",
+  "status": "failed",
+  "duration": 3500,
+  "failure_reason": "HTTP Error 401: Unauthorized access to /api/users endpoint. Authentication token may be expired.",
+  "test_file": "api/auth.spec.js",
+  "environment": "staging-api-server"
+}

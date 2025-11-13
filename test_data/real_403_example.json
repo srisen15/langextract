@@ -1,0 +1,10 @@
+{
+  "test_name": "Admin Panel Access Check",
+  "status": "failed", 
+  "duration_ms": 2100,
+  "duration_seconds": 2.1,
+  "failure_reason": "HTTP 403 Forbidden: User 'testuser@company.com' does not have sufficient privileges to access /admin/users endpoint. Required role: ADMIN, current role: USER",
+  "test_file": "tests/admin/user-management.spec.ts",
+  "environment": "prod-admin-gateway",
+  "tags": ["@admin", "@permissions", "@security"]
+}

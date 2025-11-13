@@ -39,9 +39,17 @@ output/reports/*.csv
 output/reports/*.html
 output/reports/*.json
 output/reports/*.md
+output/reports/*.txt
 output/logs/*.log
 output/azure_cache/
 output/daily_reports/
+
+# Exclude all report output files but keep directory structure
+output/reports/executive_summary_*.html
+output/reports/executive_summary_*.md
+output/reports/executive_summary_email_*.txt
+output/reports/test_analysis_report_*
+output/reports/failure_analysis_*
 
 # Enhanced Analyzer Output (NEW)
 src/utils/output/
@@ -74,11 +82,12 @@ temp_analysis/
 
 # Development & Debug Files (NEW)
 debug_*.py
-test_*.py
 experimental_*.py
 temp_*.py
 scratch_*.py
 local_test_*.py
+# Keep demos/ and test_data/ but exclude temporary test files
+test_temp_*.py
 
 # IDE/Editor
 .vscode/

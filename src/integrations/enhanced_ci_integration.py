@@ -10,7 +10,10 @@ import os
 import json
 import subprocess
 from pathlib import Path
-from test_log_analyzer import BatchTestAnalyzer, TestLogExtractor
+
+# Add parent directory to path for imports
+sys.path.insert(0, str(Path(__file__).parent.parent))
+from core.test_log_analyzer import BatchTestAnalyzer, TestLogExtractor
 
 class QualityGates:
     """Define and check quality gates for test results"""

@@ -231,17 +231,44 @@ class EnhancedAnalyzer:
         self.failure_patterns = {
             'authentication_failure': {
                 'patterns': [
+                    r'401.*unauthorized',
+                    r'401.*error',
+                    r'http.*401',
+                    r'unauthorized.*access',
                     r'authentication.*failed',
                     r'invalid.*credentials',
                     r'login.*failed',
                     r'unauthorized',
-                    r'401.*error',
-                    r'auth.*error'
+                    r'auth.*error',
+                    r'access.*denied.*401',
+                    r'token.*expired.*401',
+                    r'session.*expired.*401'
                 ],
                 'hints': [
-                    "Check authentication service status and user credentials",
-                    "Verify test data includes valid login information",
-                    "Review authentication flow for recent changes"
+                    "401 Unauthorized: Check if authentication tokens are valid and not expired",
+                    "Verify API keys, JWT tokens, or session cookies are properly configured",
+                    "Check if user has sufficient permissions for the requested resource",
+                    "Review authentication service status and user credentials",
+                    "Validate test data includes correct login information and roles"
+                ]
+            },
+            'authorization_failure': {
+                'patterns': [
+                    r'403.*forbidden',
+                    r'403.*error',
+                    r'http.*403',
+                    r'forbidden.*access',
+                    r'access.*forbidden',
+                    r'permission.*denied.*403',
+                    r'insufficient.*privileges',
+                    r'role.*not.*authorized',
+                    r'user.*not.*permitted'
+                ],
+                'hints': [
+                    "403 Forbidden: User is authenticated but lacks required permissions",
+                    "Check user roles and permissions for the requested operation",
+                    "Verify access control lists (ACL) and role-based permissions",
+                    "Review if user account has been assigned correct roles/groups"
                 ]
             },
             'timeout_performance': {
@@ -266,12 +293,23 @@ class EnhancedAnalyzer:
                     r'connection.*refused',
                     r'api.*endpoint.*error',
                     r'http.*error.*[45]\d{2}',
-                    r'fetch.*failed'
+                    r'fetch.*failed',
+                    r'500.*internal.*server.*error',
+                    r'502.*bad.*gateway',
+                    r'503.*service.*unavailable',
+                    r'504.*gateway.*timeout',
+                    r'404.*not.*found',
+                    r'api.*call.*failed',
+                    r'rest.*api.*error',
+                    r'endpoint.*unreachable'
                 ],
                 'hints': [
                     "Verify API endpoint availability and correct URLs",
-                    "Check network connectivity and firewall settings",
-                    "Review API service logs for errors"
+                    "Check network connectivity and firewall settings", 
+                    "Review API service logs for errors",
+                    "For 5xx errors: Check server health and infrastructure",
+                    "For 404 errors: Verify endpoint URLs haven't changed",
+                    "Check API rate limiting and authentication headers"
                 ]
             },
             'element_interaction': {
@@ -353,7 +391,7 @@ class EnhancedAnalyzer:
         return 'unknown'
     
     def categorize_failure(self, failure_reason: str) -> Dict[str, Any]:
-        """Enhanced failure categorization with specific hints"""
+        """Enhanced failure categorization with specific hints and HTTP status code handling"""
         if not failure_reason:
             return {
                 'category': 'unknown',
@@ -364,12 +402,58 @@ class EnhancedAnalyzer:
         
         failure_lower = failure_reason.lower()
         
+        # Enhanced HTTP status code detection with high confidence
+        # Check for 401 Unauthorized
+        if re.search(r'401', failure_lower):
+            return {
+                'category': 'authentication_failure',
+                'confidence': 0.95,
+                'hint': "401 Unauthorized: Check if authentication tokens are valid and not expired",
+                'reasoning': "Detected 401 HTTP status code - authentication issue",
+                'http_status': '401'
+            }
+        
+        # Check for 403 Forbidden
+        if re.search(r'403', failure_lower):
+            return {
+                'category': 'authorization_failure',
+                'confidence': 0.95,
+                'hint': "403 Forbidden: User is authenticated but lacks required permissions",
+                'reasoning': "Detected 403 HTTP status code - authorization issue",
+                'http_status': '403'
+            }
+        
+        # Check for other specific HTTP status codes
+        http_status_patterns = {
+            r'404': ('network_api_error', "404 Not Found: API endpoint may have changed or doesn't exist"),
+            r'500': ('network_api_error', "500 Internal Server Error: Backend service issue - check server logs"),
+            r'502': ('network_api_error', "502 Bad Gateway: Proxy/load balancer issue - check infrastructure"),
+            r'503': ('network_api_error', "503 Service Unavailable: Service temporarily down - retry or check status"),
+            r'504': ('network_api_error', "504 Gateway Timeout: Upstream service timeout - check response times")
+        }
+        
+        for status_pattern, (category, hint) in http_status_patterns.items():
+            if re.search(status_pattern, failure_lower):
+                return {
+                    'category': category,
+                    'confidence': 0.90,
+                    'hint': hint,
+                    'reasoning': f"Detected HTTP {status_pattern.strip('r')} status code",
+                    'http_status': status_pattern.strip('r')
+                }
+        
+        # Original pattern matching for all other failure types
         for category, category_data in self.failure_patterns.items():
             for pattern in category_data['patterns']:
                 if re.search(pattern, failure_lower):
+                    confidence = 0.85
+                    # Increase confidence for exact matches
+                    if pattern in failure_lower:
+                        confidence = 0.90
+                    
                     return {
                         'category': category,
-                        'confidence': 0.85,
+                        'confidence': confidence,
                         'hint': category_data['hints'][0],  # Primary hint
                         'reasoning': f"Matched pattern: {pattern}",
                         'all_hints': category_data['hints']
