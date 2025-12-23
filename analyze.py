@@ -14,13 +14,20 @@ sys.path.insert(0, src_dir)
 def main():
     """Main entry point for local analysis"""
     try:
-        # Import and run the local analyzer
-        from utils.local_analyzer import main as local_main
-        local_main()
+        # Import and run the enhanced local analyzer
+        from utils.local_analyzer_enhanced import main as enhanced_main
+        enhanced_main()
     except ImportError as e:
-        print(f"❌ Import error: {e}")
-        print("💡 Please run the setup script first: .\\scripts\\setup.ps1")
-        sys.exit(1)
+        print(f"❌ Enhanced analyzer import error: {e}")
+        print("💡 Falling back to basic analyzer...")
+        try:
+            # Fallback to basic analyzer
+            from utils.local_analyzer import main as local_main
+            local_main()
+        except ImportError as e2:
+            print(f"❌ Basic analyzer import error: {e2}")
+            print("💡 Please run the setup script first: .\\scripts\\setup.ps1")
+            sys.exit(1)
     except Exception as e:
         print(f"❌ Error: {e}")
         sys.exit(1)

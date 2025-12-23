@@ -1,0 +1,10 @@
+{
+  "test_name": "User Login Authentication",
+  "status": "failed",
+  "duration_ms": 3500,
+  "duration_seconds": 3.5,
+  "failure_reason": "HTTP Error 401: Unauthorized access to /api/auth/login. Invalid credentials provided for user john.doe@company.com",
+  "test_file": "tests/auth/login.spec.ts",
+  "environment": "staging-auth-service",
+  "tags": ["@auth", "@api", "@regression"]
+}

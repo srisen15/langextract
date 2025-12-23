@@ -1,0 +1,83 @@
+# Test Analysis Configuration
+# Configuration settings for test result analysis and quality gates
+
+# Quality Status Thresholds (based on pass rate percentage)
+quality_thresholds:
+  good: 90          # Pass rate >= 90% = GOOD status (Green)
+  acceptable: 75    # Pass rate >= 75% = NEEDS ATTENTION status (Yellow)
+  # Pass rate < 75% = CRITICAL status (Red)
+
+# Priority Thresholds
+priority_thresholds:
+  # Number of failures to trigger HIGH priority alert
+  authentication_high: 5
+  authorization_high: 5
+  
+  # Number of failures to trigger MEDIUM priority alert
+  performance_medium: 5
+  ui_interaction_medium: 5
+  data_validation_medium: 3
+
+# Report Settings
+report_settings:
+  # Maximum number of failure categories to show in summary
+  max_categories_in_summary: 5
+  
+  # Maximum number of environments to show in distribution
+  max_environments_in_summary: 5
+  
+  # Include recommendations in reports
+  include_recommendations: true
+  
+  # Include environment distribution in reports
+  include_environment_distribution: true
+
+# Email Settings
+email_settings:
+  # Default subject prefix
+  subject_prefix: "Test Analysis Summary"
+  
+  # Include timestamp in subject
+  include_timestamp: true
+  
+  # Default recipients (can be overridden via command line)
+  # recipients:
+  #   - qa-team@company.com
+  #   - stakeholders@company.com
+
+# Notification Settings
+notification_settings:
+  # Notify on quality status change
+  notify_on_status_change: true
+  
+  # Notify when pass rate drops below threshold
+  notify_on_pass_rate_drop: true
+  critical_pass_rate_threshold: 75
+  
+  # Notify on high priority issues
+  notify_on_high_priority: true
+  high_priority_failure_count: 10
+
+# Category Confidence Levels (defined in enhanced_analyzer.py)
+# These values are for reference and documentation
+category_confidence:
+  authentication_failure: 95
+  authorization_failure: 95
+  server_error: 90
+  resource_not_found: 90
+  ui_interaction_failure: 85
+  connectivity_issue: 85
+  configuration_issue: 85
+  data_validation_failure: 90
+  performance_issue: 80
+
+# Custom Category Rules (optional)
+# Add custom failure patterns here
+# custom_patterns:
+#   custom_category_name:
+#     patterns:
+#       - "regex pattern 1"
+#       - "regex pattern 2"
+#     confidence: 85
+#     hints:
+#       - "Hint for fixing this issue"

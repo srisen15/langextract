@@ -1,0 +1,8 @@
+{
+  "test_name": "api_403_forbidden_test", 
+  "status": "failed",
+  "duration": 2800,
+  "failure_reason": "HTTP Error 403: Forbidden - User does not have permission to access /admin/users endpoint.",
+  "test_file": "api/admin.spec.js",
+  "environment": "prod-api-gateway"
+}
