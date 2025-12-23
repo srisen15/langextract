@@ -4,7 +4,7 @@ Core Analysis Engine
 
 Contains the main test log analysis functionality including:
 - TestLogExtractor: Core failure categorization and analysis
-- BatchTestAnalyzer: Batch processing and report generation  
+- BatchTestAnalyzer: Batch processing and report generation
 - TestAnalysisScheduler: Automated daily execution and notifications
 """
 

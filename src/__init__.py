@@ -36,7 +36,7 @@ from .utils.production_analyzer import ProductionAnalyzer
 
 __all__ = [
     'TestLogExtractor',
-    'BatchTestAnalyzer', 
+    'BatchTestAnalyzer',
     'TestAnalysisScheduler',
     'AzureBlobTestAnalyzer',
     'QualityGates',

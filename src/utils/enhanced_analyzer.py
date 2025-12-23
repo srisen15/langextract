@@ -9,23 +9,24 @@ import statistics
 from typing import Dict, List, Any, Optional
 from datetime import datetime
 
+
 class EnhancedLocalAnalyzer:
     """
     Enhanced test analyzer with built-in HTTP status code categorization
     and comprehensive failure pattern matching
     """
-    
+
     def __init__(self):
         """Initialize the enhanced analyzer with failure patterns and HTTP status mapping"""
-        
+
         # Environment mapping
         self.environment_mappings = {
             # Development environments
             'dev': 'Development',
-            'development': 'Development', 
+            'development': 'Development',
             'local': 'Development',
             'localhost': 'Development',
-            
+
             # Testing environments
             'test': 'Testing',
             'testing': 'Testing',
@@ -35,16 +36,16 @@ class EnhancedLocalAnalyzer:
             'staging': 'Staging',
             'stage': 'Staging',
             'sit': 'System Integration Testing',
-            
+
             # Production environments
             'prod': 'Production',
             'production': 'Production',
             'live': 'Production',
-            
+
             # Fallback
             'unknown': 'Unknown Environment'
         }
-        
+
         # Comprehensive failure patterns with confidence levels
         self.failure_patterns = {
             'ui_interaction_failure': {
@@ -65,7 +66,7 @@ class EnhancedLocalAnalyzer:
                     'Review element interaction timing'
                 ]
             },
-            
+
             'performance_issue': {
                 'patterns': [
                     r'TimeoutException',
@@ -81,7 +82,7 @@ class EnhancedLocalAnalyzer:
                     'Review application performance'
                 ]
             },
-            
+
             'connectivity_issue': {
                 'patterns': [
                     r'ConnectionError',
@@ -98,7 +99,7 @@ class EnhancedLocalAnalyzer:
                     'Validate service endpoints and URLs'
                 ]
             },
-            
+
             'data_validation_failure': {
                 'patterns': [
                     r'AssertionError',
@@ -114,7 +115,7 @@ class EnhancedLocalAnalyzer:
                     'Validate data sources and formats'
                 ]
             },
-            
+
             'server_error': {
                 'patterns': [
                     r'HTTP [45]\d\d',
@@ -130,7 +131,7 @@ class EnhancedLocalAnalyzer:
                     'Review recent deployments or changes'
                 ]
             },
-            
+
             'configuration_issue': {
                 'patterns': [
                     r'ConfigurationError',
@@ -155,7 +156,7 @@ class EnhancedLocalAnalyzer:
         match = re.search(http_pattern, error_message, re.IGNORECASE)
         if match:
             return match.group(1)
-        
+
         # Pattern 2: "401 -" or "failed: 401" (common in API error messages)
         status_pattern = r'(?:failed:|status:)?\s*(\d{3})\s*[-:]'
         match = re.search(status_pattern, error_message, re.IGNORECASE)
@@ -164,16 +165,16 @@ class EnhancedLocalAnalyzer:
             # Verify it's a valid HTTP status code (4xx or 5xx)
             if status.startswith(('4', '5')):
                 return status
-        
+
         return None
 
     def categorize_failure(self, error_message: str) -> Dict[str, Any]:
         """
         Categorize failure with enhanced HTTP status code detection and original pattern matching
-        
+
         Args:
             error_message: The error message to categorize
-            
+
         Returns:
             Dictionary with category, confidence, hint, and reasoning
         """
@@ -184,7 +185,7 @@ class EnhancedLocalAnalyzer:
                 'hint': 'No error message provided',
                 'reasoning': 'Empty error message'
             }
-        
+
         # First, check for HTTP status codes (enhanced categorization)
         status_code = self.extract_http_status_code(error_message)
         if status_code:
@@ -194,11 +195,10 @@ class EnhancedLocalAnalyzer:
                     'confidence': 0.95,
                     'hint': 'Check user credentials and authentication tokens. Verify login process and session management.',
                     'reasoning': f'HTTP 401 Unauthorized detected',
-                    'status_code': status_code
-                }
+                    'status_code': status_code}
             elif status_code == '403':
                 return {
-                    'category': 'authorization_failure', 
+                    'category': 'authorization_failure',
                     'confidence': 0.95,
                     'hint': 'Verify user permissions and access roles. Check authorization policies and user groups.',
                     'reasoning': f'HTTP 403 Forbidden detected',
@@ -220,7 +220,7 @@ class EnhancedLocalAnalyzer:
                     'reasoning': f'HTTP {status_code} server error detected',
                     'status_code': status_code
                 }
-        
+
         # Fall back to original comprehensive pattern matching
         for category, category_data in self.failure_patterns.items():
             for pattern in category_data['patterns']:
@@ -233,7 +233,7 @@ class EnhancedLocalAnalyzer:
                         'reasoning': f"Matched pattern: {pattern}",
                         'all_hints': category_data['hints']
                     }
-        
+
         # No patterns matched
         return {
             'category': 'unknown',
@@ -246,18 +246,18 @@ class EnhancedLocalAnalyzer:
         """Map raw environment string to logical environment"""
         if not raw_env:
             return 'Unknown Environment'
-        
+
         raw_env_lower = raw_env.lower().strip()
         return self.environment_mappings.get(raw_env_lower, f'Custom Environment ({raw_env})')
 
     def enhance_test_result(self, test_data: Dict[str, Any]) -> Dict[str, Any]:
         """Enhance a single test result with categorization and environment mapping"""
         enhanced = test_data.copy()
-        
+
         # Map environment
         raw_env = test_data.get('environment', 'unknown')
         enhanced['environment'] = self.map_environment(raw_env)
-        
+
         # Categorize failure if test failed
         if test_data.get('status') == 'FAIL' and test_data.get('error_message'):
             failure_analysis = self.categorize_failure(test_data['error_message'])
@@ -265,44 +265,44 @@ class EnhancedLocalAnalyzer:
             enhanced['failure_confidence'] = failure_analysis['confidence']
             enhanced['failure_hint'] = failure_analysis['hint']
             enhanced['failure_reasoning'] = failure_analysis['reasoning']
-            
+
             # Include HTTP status code if detected
             if 'status_code' in failure_analysis:
                 enhanced['http_status_code'] = failure_analysis['status_code']
-        
+
         return enhanced
 
     def analyze_batch_results(self, test_results: List[Dict[str, Any]]) -> Dict[str, Any]:
         """Analyze a batch of test results with enhanced categorization"""
         if not test_results:
             return {'message': 'No test results to analyze'}
-        
+
         # Enhanced analysis with categorization
         failed_tests = [test for test in test_results if test.get('status') == 'FAIL']
         passed_tests = [test for test in test_results if test.get('status') == 'PASS']
-        
+
         # Environment distribution
         env_distribution = {}
         failure_categories = {}
-        
+
         enhanced_results = []
         for test in test_results:
             enhanced = self.enhance_test_result(test)
             enhanced_results.append(enhanced)
-            
+
             # Track environment distribution
             env = enhanced['environment']
             env_distribution[env] = env_distribution.get(env, 0) + 1
-            
+
             # Track failure categories
             if enhanced.get('failure_category'):
                 category = enhanced['failure_category']
                 failure_categories[category] = failure_categories.get(category, 0) + 1
-        
+
         # Calculate statistics
         total_tests = len(test_results)
         pass_rate = (len(passed_tests) / total_tests) * 100 if total_tests > 0 else 0
-        
+
         return {
             'summary': {
                 'total_tests': total_tests,
@@ -319,10 +319,10 @@ class EnhancedLocalAnalyzer:
     def generate_failure_report(self, test_results: List[Dict[str, Any]]) -> Dict[str, Any]:
         """Generate detailed failure analysis report"""
         analysis = self.analyze_batch_results(test_results)
-        
+
         if not analysis.get('failure_categories'):
             return {'message': 'No failures to analyze'}
-        
+
         # Detailed failure breakdown
         failure_details = []
         for test in analysis['enhanced_results']:
@@ -336,11 +336,11 @@ class EnhancedLocalAnalyzer:
                     'error_message': test.get('error_message', ''),
                     'http_status_code': test.get('http_status_code')
                 })
-        
+
         # Priority recommendations
         recommendations = []
         categories = analysis['failure_categories']
-        
+
         # High priority: Authentication/Authorization failures
         auth_failures = categories.get('authentication_failure', 0) + categories.get('authorization_failure', 0)
         if auth_failures > 0:
@@ -350,17 +350,17 @@ class EnhancedLocalAnalyzer:
                 'count': auth_failures,
                 'action': 'Review user management and access control systems'
             })
-        
+
         # Medium priority: Performance and connectivity
         perf_issues = categories.get('performance_issue', 0) + categories.get('connectivity_issue', 0)
         if perf_issues > 0:
             recommendations.append({
-                'priority': 'MEDIUM', 
+                'priority': 'MEDIUM',
                 'area': 'Performance/Connectivity',
                 'count': perf_issues,
                 'action': 'Optimize infrastructure and network configurations'
             })
-        
+
         return {
             'failure_summary': analysis['failure_categories'],
             'failure_details': failure_details,
@@ -369,14 +369,15 @@ class EnhancedLocalAnalyzer:
             'timestamp': datetime.now().isoformat()
         }
 
+
 if __name__ == "__main__":
     # Simple demonstration
     print("🚀 Enhanced Local Analyzer - Demonstration")
     print("=" * 50)
-    
+
     # Create analyzer instance
     analyzer = EnhancedLocalAnalyzer()
-    
+
     # Demo failure categorization
     demo_errors = [
         "HTTP 401 Unauthorized: Invalid credentials",
@@ -385,7 +386,7 @@ if __name__ == "__main__":
         "TimeoutException: Page load timeout",
         "ConnectionError: Host unreachable"
     ]
-    
+
     for error in demo_errors:
         result = analyzer.categorize_failure(error)
         print(f"Error: {error}")

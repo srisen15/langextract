@@ -10,17 +10,18 @@ USAGE:
 EXAMPLES:
     # Basic analysis
     python analyze_tests.py --input "C:\Users\YourName\Downloads\test results"
-    
+
     # With enhanced reports (includes 401/403 categorization)
     python analyze_tests.py --input "C:\Users\YourName\Downloads\test results" --enhanced
-    
+
     # Specify output directory
     python analyze_tests.py --input "C:\test_results" --output "C:\reports"
-    
+
     # Verbose mode
     python analyze_tests.py --input "C:\test_results" --enhanced --verbose
 """
 
+from enhanced_analyzer import EnhancedLocalAnalyzer
 import os
 import sys
 import json
@@ -35,9 +36,10 @@ src_utils_dir = os.path.join(current_dir, 'src', 'utils')
 sys.path.insert(0, src_utils_dir)
 
 # Import the enhanced analyzer directly
-from enhanced_analyzer import EnhancedLocalAnalyzer
 
 # Load configuration
+
+
 def load_config():
     """Load configuration from config.yaml or return defaults"""
     # Look for config.yaml in docs/configuration folder first, then fall back to root
@@ -45,13 +47,13 @@ def load_config():
         Path(__file__).parent / 'docs' / 'configuration' / 'config.yaml',
         Path(__file__).parent / 'config.yaml'
     ]
-    
+
     config_path = None
     for path in config_paths:
         if path.exists():
             config_path = path
             break
-    
+
     # Default configuration
     default_config = {
         'quality_thresholds': {
@@ -69,7 +71,7 @@ def load_config():
             'include_environment_distribution': True
         }
     }
-    
+
     try:
         if config_path and config_path.exists():
             with open(config_path, 'r') as f:
@@ -80,38 +82,41 @@ def load_config():
             print(f"⚠️  Config file not found, using default configuration")
     except Exception as e:
         print(f"⚠️  Warning: Could not load config.yaml ({e}), using defaults")
-    
+
     return default_config
+
 
 # Global config
 CONFIG = load_config()
 
+
 def find_json_files(input_dir):
     """Find all JSON test result files in the input directory"""
     input_path = Path(input_dir)
-    
+
     if not input_path.exists():
         print(f"❌ Error: Directory not found: {input_dir}")
         return []
-    
+
     json_files = list(input_path.glob("**/*.json"))
-    
+
     if not json_files:
         print(f"⚠️  Warning: No JSON files found in {input_dir}")
         return []
-    
+
     print(f"📁 Found {len(json_files)} JSON file(s) in {input_dir}")
     return json_files
+
 
 def load_test_results(json_files):
     """Load test results from JSON files"""
     all_results = []
-    
+
     for json_file in json_files:
         try:
             with open(json_file, 'r', encoding='utf-8') as f:
                 data = json.load(f)
-                
+
                 # Handle different JSON structures
                 if isinstance(data, list):
                     all_results.extend(data)
@@ -129,7 +134,7 @@ def load_test_results(json_files):
                             'error_message': '',
                             'environment': 'unknown'
                         }
-                        
+
                         # Extract error message from multiple possible locations
                         # Priority: statusMessage, statusTrace, testStage.statusMessage
                         if data.get('statusMessage'):
@@ -141,7 +146,7 @@ def load_test_results(json_files):
                             normalized['error_message'] = data['testStage']['statusMessage']
                         elif data.get('statusDetails', {}).get('message'):
                             normalized['error_message'] = data['statusDetails']['message']
-                        
+
                         # Extract environment from labels
                         for label in data.get('labels', []):
                             if label.get('name') == 'host':
@@ -150,28 +155,29 @@ def load_test_results(json_files):
                             elif label.get('name') == 'env':
                                 normalized['environment'] = label.get('value', 'unknown')
                                 break
-                        
+
                         all_results.append(normalized)
                     else:
                         # Single test result (legacy format)
                         all_results.append(data)
-                        
+
         except json.JSONDecodeError as e:
             print(f"⚠️  Skipping invalid JSON file: {json_file.name} ({e})")
         except Exception as e:
             print(f"⚠️  Error reading {json_file.name}: {e}")
-    
+
     return all_results
+
 
 def get_quality_status(pass_rate, config=None):
     """Determine quality status based on pass rate and configuration thresholds"""
     if config is None:
         config = CONFIG
-    
+
     thresholds = config.get('quality_thresholds', {})
     good_threshold = thresholds.get('good', 90)
     acceptable_threshold = thresholds.get('acceptable', 75)
-    
+
     if pass_rate >= good_threshold:
         return 'GOOD', '🟢'
     elif pass_rate >= acceptable_threshold:
@@ -179,23 +185,24 @@ def get_quality_status(pass_rate, config=None):
     else:
         return 'CRITICAL', '🔴'
 
+
 def generate_executive_summary_html(analysis, output_dir):
     """Generate HTML executive summary for email"""
     html_path = output_dir / f"executive_summary_{datetime.now().strftime('%Y%m%d_%H%M%S')}.html"
-    
+
     summary = analysis.get('summary', {})
     failure_cats = analysis.get('failure_categories', {})
     env_dist = analysis.get('environment_distribution', {})
-    
+
     # Calculate metrics
     total_tests = summary.get('total_tests', 0)
     passed = summary.get('passed', 0)
     failed = summary.get('failed', 0)
     pass_rate = summary.get('pass_rate', 0)
-    
+
     # Get quality status from config thresholds
     quality_text, quality_icon = get_quality_status(pass_rate)
-    
+
     # Quality status with colors
     if quality_text == 'GOOD':
         quality_badge = f'<span style="background-color: #28a745; color: white; padding: 4px 12px; border-radius: 4px; font-weight: bold;">{quality_icon} {quality_text}</span>'
@@ -206,12 +213,12 @@ def generate_executive_summary_html(analysis, output_dir):
     else:  # CRITICAL
         quality_badge = f'<span style="background-color: #dc3545; color: white; padding: 4px 12px; border-radius: 4px; font-weight: bold;">{quality_icon} {quality_text}</span>'
         status_color = '#dc3545'
-    
+
     # Top issues
     auth_failures = failure_cats.get('authentication_failure', 0) + failure_cats.get('authorization_failure', 0)
     perf_issues = failure_cats.get('performance_issue', 0) + failure_cats.get('connectivity_issue', 0)
     ui_issues = failure_cats.get('ui_interaction_failure', 0)
-    
+
     html_content = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -347,12 +354,12 @@ def generate_executive_summary_html(analysis, output_dir):
 <body>
     <div class="container">
         <h1>📊 Test Analysis Executive Summary</h1>
-        
+
         <p style="color: #666; font-size: 14px;">
             <strong>Analysis Date:</strong> {datetime.now().strftime('%B %d, %Y at %I:%M %p')}<br>
             <strong>Quality Status:</strong> {quality_badge}
         </p>
-        
+
         <h2>📈 Key Metrics</h2>
         <div class="metrics">
             <div class="metric-card">
@@ -373,7 +380,7 @@ def generate_executive_summary_html(analysis, output_dir):
             </div>
         </div>
 """
-    
+
     # Top Failure Categories
     if failure_cats:
         sorted_cats = sorted(failure_cats.items(), key=lambda x: x[1], reverse=True)
@@ -403,12 +410,12 @@ def generate_executive_summary_html(analysis, output_dir):
             </tbody>
         </table>
 """
-    
+
     # Priority Recommendations
     html_content += """
         <h2>🎯 Priority Recommendations</h2>
 """
-    
+
     if auth_failures > 0:
         html_content += f"""
         <div class="priority-card">
@@ -416,7 +423,7 @@ def generate_executive_summary_html(analysis, output_dir):
             <p><strong>Action Required:</strong> Review user management, token handling, and access control systems. Check OKTA/authentication service stability and investigate JWT token validation issues.</p>
         </div>
 """
-    
+
     if perf_issues > 0:
         html_content += f"""
         <div class="priority-card medium">
@@ -424,7 +431,7 @@ def generate_executive_summary_html(analysis, output_dir):
             <p><strong>Action Required:</strong> Optimize infrastructure, review network configurations, and investigate timeout patterns. Check API response times and network latency.</p>
         </div>
 """
-    
+
     if ui_issues > 0:
         html_content += f"""
         <div class="priority-card medium">
@@ -432,7 +439,7 @@ def generate_executive_summary_html(analysis, output_dir):
             <p><strong>Action Required:</strong> Review element selectors, page load timing, and dynamic content handling. Verify element visibility and clickability conditions.</p>
         </div>
 """
-    
+
     # Check if pass rate is below acceptable threshold (from config)
     acceptable_threshold = CONFIG.get('quality_thresholds', {}).get('acceptable', 75)
     if pass_rate < acceptable_threshold:
@@ -442,7 +449,7 @@ def generate_executive_summary_html(analysis, output_dir):
             <p><strong>Action Required:</strong> Pass rate ({pass_rate:.1f}%) is below acceptable threshold ({acceptable_threshold}%). Conduct comprehensive environment and application stability review.</p>
         </div>
 """
-    
+
     # Next Steps
     html_content += """
         <h2>📋 Recommended Next Steps</h2>
@@ -454,7 +461,7 @@ def generate_executive_summary_html(analysis, output_dir):
             <li><strong>Trend Monitoring:</strong> Track failure categories over time for early issue detection</li>
         </ol>
 """
-    
+
     # Environment Distribution (if available)
     if env_dist:
         sorted_envs = sorted(env_dist.items(), key=lambda x: x[1], reverse=True)
@@ -480,7 +487,7 @@ def generate_executive_summary_html(analysis, output_dir):
             </tbody>
         </table>
 """
-    
+
     # Footer
     html_content += f"""
         <div class="footer">
@@ -491,30 +498,31 @@ def generate_executive_summary_html(analysis, output_dir):
 </body>
 </html>
 """
-    
+
     with open(html_path, 'w', encoding='utf-8') as f:
         f.write(html_content)
-    
+
     return html_path
+
 
 def generate_executive_summary_email(analysis, output_dir):
     """Generate plain text email-friendly summary"""
     email_path = output_dir / f"executive_summary_email_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt"
-    
+
     summary = analysis.get('summary', {})
     failure_cats = analysis.get('failure_categories', {})
-    
+
     total_tests = summary.get('total_tests', 0)
     passed = summary.get('passed', 0)
     failed = summary.get('failed', 0)
     pass_rate = summary.get('pass_rate', 0)
-    
+
     # Get quality status from config thresholds
     quality_text, quality_icon = get_quality_status(pass_rate)
-    
+
     auth_failures = failure_cats.get('authentication_failure', 0) + failure_cats.get('authorization_failure', 0)
     perf_issues = failure_cats.get('performance_issue', 0) + failure_cats.get('connectivity_issue', 0)
-    
+
     email_content = f"""
 ================================================================================
 TEST ANALYSIS EXECUTIVE SUMMARY
@@ -535,20 +543,20 @@ Pass Rate:      {pass_rate:.1f}%
 TOP ISSUES
 --------------------------------------------------------------------------------
 """
-    
+
     if failure_cats:
         sorted_cats = sorted(failure_cats.items(), key=lambda x: x[1], reverse=True)
         for i, (category, count) in enumerate(sorted_cats[:5], 1):
             percentage = (count / failed * 100) if failed > 0 else 0
             cat_name = category.replace('_', ' ').title()
             email_content += f"{i}. {cat_name}: {count} failures ({percentage:.1f}%)\n"
-    
+
     email_content += f"""
 --------------------------------------------------------------------------------
 PRIORITY RECOMMENDATIONS
 --------------------------------------------------------------------------------
 """
-    
+
     if auth_failures > 0:
         email_content += f"""
 [HIGH PRIORITY] Authentication/Authorization ({auth_failures} issues)
@@ -557,7 +565,7 @@ PRIORITY RECOMMENDATIONS
 → Investigate JWT token validation issues
 
 """
-    
+
     if perf_issues > 0:
         email_content += f"""
 [MEDIUM PRIORITY] Performance/Connectivity ({perf_issues} issues)
@@ -566,7 +574,7 @@ PRIORITY RECOMMENDATIONS
 → Check network latency and service availability
 
 """
-    
+
     # Check if pass rate is below acceptable threshold (from config)
     acceptable_threshold = CONFIG.get('quality_thresholds', {}).get('acceptable', 75)
     if pass_rate < acceptable_threshold:
@@ -577,7 +585,7 @@ PRIORITY RECOMMENDATIONS
 → Consider immediate remediation actions
 
 """
-    
+
     email_content += f"""
 --------------------------------------------------------------------------------
 RECOMMENDED NEXT STEPS
@@ -595,33 +603,34 @@ the QA team for assistance.
 Generated by Test Results Analyzer | {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
 ================================================================================
 """
-    
+
     with open(email_path, 'w', encoding='utf-8') as f:
         f.write(email_content)
-    
+
     return email_path
+
 
 def generate_executive_summary(analysis, output_dir):
     """Generate executive summary report for stakeholders (Markdown format)"""
     summary_path = output_dir / f"executive_summary_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md"
-    
+
     summary = analysis.get('summary', {})
     failure_cats = analysis.get('failure_categories', {})
     env_dist = analysis.get('environment_distribution', {})
-    
+
     # Calculate metrics
     total_tests = summary.get('total_tests', 0)
     passed = summary.get('passed', 0)
     failed = summary.get('failed', 0)
     pass_rate = summary.get('pass_rate', 0)
-    
+
     # Get quality status from config thresholds
     quality_text, quality_icon = get_quality_status(pass_rate)
     quality_status = f"{quality_icon} {quality_text}"
-    
+
     with open(summary_path, 'w', encoding='utf-8') as f:
         f.write("# Test Analysis Executive Summary\n\n")
-        
+
         # Overview Section
         f.write("## 📊 Overview\n\n")
         f.write(f"- **Analysis Date**: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
@@ -630,22 +639,22 @@ def generate_executive_summary(analysis, output_dir):
         f.write(f"- **Tests Failed**: {failed}\n")
         f.write(f"- **Pass Rate**: {pass_rate:.1f}%\n")
         f.write(f"- **Quality Status**: {quality_status}\n\n")
-        
+
         # Key Findings
         f.write("## 🔍 Key Findings\n\n")
-        
+
         if failure_cats:
             # Sort by count, descending
             sorted_cats = sorted(failure_cats.items(), key=lambda x: x[1], reverse=True)
             top_issues = sorted_cats[:3]
-            
+
             f.write("### Top Failure Categories:\n\n")
             for i, (category, count) in enumerate(top_issues, 1):
                 percentage = (count / failed * 100) if failed > 0 else 0
                 cat_name = category.replace('_', ' ').title()
                 f.write(f"{i}. **{cat_name}**: {count} occurrences ({percentage:.1f}% of failures)\n")
             f.write("\n")
-        
+
         # Environment Analysis
         if env_dist:
             f.write("### Environment Distribution:\n\n")
@@ -653,17 +662,17 @@ def generate_executive_summary(analysis, output_dir):
             for env, count in sorted_envs[:5]:  # Top 5 environments
                 f.write(f"- **{env}**: {count} tests\n")
             f.write("\n")
-        
+
         # Priority Recommendations
         f.write("## 🎯 Priority Recommendations\n\n")
-        
+
         auth_failures = failure_cats.get('authentication_failure', 0) + failure_cats.get('authorization_failure', 0)
         perf_issues = failure_cats.get('performance_issue', 0) + failure_cats.get('connectivity_issue', 0)
         ui_issues = failure_cats.get('ui_interaction_failure', 0)
         data_issues = failure_cats.get('data_validation_failure', 0)
-        
+
         recommendations = []
-        
+
         if auth_failures > 0:
             recommendations.append({
                 'priority': '🔴 HIGH',
@@ -671,7 +680,7 @@ def generate_executive_summary(analysis, output_dir):
                 'count': auth_failures,
                 'action': 'Review user management, token handling, and access control systems. Check OKTA/authentication service stability.'
             })
-        
+
         if perf_issues > 0:
             recommendations.append({
                 'priority': '🟡 MEDIUM',
@@ -679,7 +688,7 @@ def generate_executive_summary(analysis, output_dir):
                 'count': perf_issues,
                 'action': 'Optimize infrastructure, review network configurations, and investigate timeout patterns.'
             })
-        
+
         if ui_issues > 0:
             recommendations.append({
                 'priority': '🟡 MEDIUM',
@@ -687,7 +696,7 @@ def generate_executive_summary(analysis, output_dir):
                 'count': ui_issues,
                 'action': 'Review element selectors, page load timing, and dynamic content handling.'
             })
-        
+
         if data_issues > 0:
             recommendations.append({
                 'priority': '🟡 MEDIUM',
@@ -695,24 +704,25 @@ def generate_executive_summary(analysis, output_dir):
                 'count': data_issues,
                 'action': 'Review test data setup, expected values, and data transformation logic.'
             })
-        
+
         # Check if pass rate is below acceptable threshold (from config)
         acceptable_threshold = CONFIG.get('quality_thresholds', {}).get('acceptable', 75)
         if pass_rate < acceptable_threshold:
-            recommendations.append({
-                'priority': '🔴 HIGH',
-                'area': 'Overall Quality',
-                'count': failed,
-                'action': f'Pass rate ({pass_rate:.1f}%) below acceptable threshold ({acceptable_threshold}%) - conduct comprehensive environment and application stability review.'
-            })
-        
+            recommendations.append(
+                {
+                    'priority': '🔴 HIGH',
+                    'area': 'Overall Quality',
+                    'count': failed,
+                    'action': f'Pass rate ({
+                        pass_rate:.1f}%) below acceptable threshold ({acceptable_threshold}%) - conduct comprehensive environment and application stability review.'})
+
         if recommendations:
             for rec in recommendations:
                 f.write(f"### {rec['priority']} - {rec['area']} ({rec['count']} issues)\n\n")
                 f.write(f"**Action Required**: {rec['action']}\n\n")
         else:
             f.write("✅ No critical issues identified. Continue monitoring test execution patterns.\n\n")
-        
+
         # Next Steps
         f.write("## 📋 Next Steps\n\n")
         f.write("1. **Review high priority failures first** - Focus on authentication and performance issues\n")
@@ -720,7 +730,7 @@ def generate_executive_summary(analysis, output_dir):
         f.write("3. **Investigate performance patterns** - Identify and resolve timeout root causes\n")
         f.write("4. **Schedule follow-up analysis** - Re-run tests after fixes are deployed\n")
         f.write("5. **Monitor trends** - Track failure categories over time for early detection\n\n")
-        
+
         # Quality Metrics
         f.write("## 📈 Quality Metrics\n\n")
         f.write(f"- **Pass Rate**: {pass_rate:.1f}% ")
@@ -730,27 +740,28 @@ def generate_executive_summary(analysis, output_dir):
             f.write("⚠️ Acceptable\n")
         else:
             f.write("❌ Needs Improvement\n")
-        
+
         f.write(f"- **Failure Rate**: {100 - pass_rate:.1f}%\n")
         f.write(f"- **Categorized Failures**: {sum(failure_cats.values())} / {failed}\n")
         f.write(f"- **Test Coverage**: {total_tests} test cases executed\n\n")
-        
+
         # Footer
         f.write("---\n\n")
         f.write(f"*Generated by Test Results Analyzer - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}*\n")
         f.write(f"\n📂 **Detailed Reports**: See `test_analysis_report_*.txt` and `failure_analysis_*.json` for complete details\n")
-    
+
     return summary_path
+
 
 def generate_text_report(analysis, output_dir):
     """Generate a human-readable text report"""
     report_path = output_dir / f"test_analysis_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt"
-    
+
     with open(report_path, 'w', encoding='utf-8') as f:
         f.write("=" * 80 + "\n")
         f.write("TEST ANALYSIS REPORT\n")
         f.write("=" * 80 + "\n\n")
-        
+
         # Summary
         summary = analysis.get('summary', {})
         f.write("📊 SUMMARY\n")
@@ -759,7 +770,7 @@ def generate_text_report(analysis, output_dir):
         f.write(f"Passed:       {summary.get('passed', 0)}\n")
         f.write(f"Failed:       {summary.get('failed', 0)}\n")
         f.write(f"Pass Rate:    {summary.get('pass_rate', 0):.2f}%\n\n")
-        
+
         # Environment Distribution
         env_dist = analysis.get('environment_distribution', {})
         if env_dist:
@@ -768,7 +779,7 @@ def generate_text_report(analysis, output_dir):
             for env, count in sorted(env_dist.items(), key=lambda x: x[1], reverse=True):
                 f.write(f"  {env}: {count}\n")
             f.write("\n")
-        
+
         # Failure Categories
         failure_cats = analysis.get('failure_categories', {})
         if failure_cats:
@@ -777,43 +788,45 @@ def generate_text_report(analysis, output_dir):
             for category, count in sorted(failure_cats.items(), key=lambda x: x[1], reverse=True):
                 f.write(f"  {category.replace('_', ' ').title()}: {count}\n")
             f.write("\n")
-        
+
         # Detailed Failures
         enhanced_results = analysis.get('enhanced_results', [])
         failed_tests = [r for r in enhanced_results if r.get('status') == 'FAIL']
-        
+
         if failed_tests:
             f.write("❌ DETAILED FAILURE ANALYSIS\n")
             f.write("=" * 80 + "\n\n")
-            
+
             for i, test in enumerate(failed_tests, 1):
                 f.write(f"[{i}] {test.get('test_name', 'Unknown Test')}\n")
                 f.write(f"    Environment: {test.get('environment', 'Unknown')}\n")
-                
+
                 if test.get('failure_category'):
                     f.write(f"    Category: {test['failure_category'].replace('_', ' ').title()}\n")
                     f.write(f"    Confidence: {test.get('failure_confidence', 0):.0%}\n")
                     f.write(f"    💡 Hint: {test.get('failure_hint', 'N/A')}\n")
-                
+
                 if test.get('http_status_code'):
                     f.write(f"    🌐 HTTP Status: {test['http_status_code']}\n")
-                
+
                 f.write(f"    Error: {test.get('error_message', 'No error message')}\n")
                 f.write("\n")
-        
+
         f.write("=" * 80 + "\n")
         f.write(f"Report generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
-    
+
     return report_path
+
 
 def generate_json_report(analysis, output_dir):
     """Generate a JSON report"""
     report_path = output_dir / f"test_analysis_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
-    
+
     with open(report_path, 'w', encoding='utf-8') as f:
         json.dump(analysis, f, indent=2)
-    
+
     return report_path
+
 
 def main():
     """Main entry point for test analysis"""
@@ -827,63 +840,63 @@ Examples:
   python analyze_tests.py --input "C:\\test_results" --output "C:\\reports" --verbose
         """
     )
-    
+
     parser.add_argument(
         '--input', '-i',
         required=True,
         help='Input directory containing test result JSON files'
     )
-    
+
     parser.add_argument(
         '--output', '-o',
         help='Output directory for reports (default: ./output/reports)'
     )
-    
+
     parser.add_argument(
         '--enhanced',
         action='store_true',
         help='Generate enhanced reports with 401/403 categorization and detailed analytics'
     )
-    
+
     parser.add_argument(
         '--verbose', '-v',
         action='store_true',
         help='Show detailed progress information'
     )
-    
+
     args = parser.parse_args()
-    
+
     # Setup output directory
     if args.output:
         output_dir = Path(args.output)
     else:
         output_dir = Path('./output/reports')
-    
+
     output_dir.mkdir(parents=True, exist_ok=True)
-    
+
     print("\n🎯 Test Results Analyzer")
     print("=" * 60)
-    
+
     # Find JSON files
     json_files = find_json_files(args.input)
     if not json_files:
         return
-    
+
     # Load test results
     print("📖 Loading test results...")
     test_results = load_test_results(json_files)
-    
+
     if not test_results:
         print("❌ No valid test results found in JSON files")
         return
-    
+
     print(f"✅ Loaded {len(test_results)} test result(s)")
-    
+
     # Analyze results
     print("\n🔍 Analyzing test results...")
     analyzer = EnhancedLocalAnalyzer()
     analysis = analyzer.analyze_batch_results(test_results)
-    
+
     # Display summary
     print("\n📊 Analysis Summary:")
     print("-" * 60)
@@ -892,7 +905,7 @@ Examples:
     print(f"  Passed: {summary.get('passed', 0)}")
     print(f"  Failed: {summary.get('failed', 0)}")
     print(f"  Pass Rate: {summary.get('pass_rate', 0):.2f}%")
-    
+
     # Show failure categories if enhanced mode
     if args.enhanced or analysis.get('failure_categories'):
         failure_cats = analysis.get('failure_categories', {})
@@ -900,28 +913,28 @@ Examples:
             print("\n🏷️  Failure Categories:")
             for category, count in sorted(failure_cats.items(), key=lambda x: x[1], reverse=True):
                 print(f"    • {category.replace('_', ' ').title()}: {count}")
-    
+
     # Generate reports
     print("\n📝 Generating reports...")
-    
+
     # Generate executive summaries (Markdown, HTML, and Email formats)
     exec_summary_md = generate_executive_summary(analysis, output_dir)
     print(f"  ✅ Executive Summary (Markdown): {exec_summary_md}")
-    
+
     exec_summary_html = generate_executive_summary_html(analysis, output_dir)
     print(f"  ✅ Executive Summary (HTML): {exec_summary_html}")
-    
+
     exec_summary_email = generate_executive_summary_email(analysis, output_dir)
     print(f"  ✅ Executive Summary (Email): {exec_summary_email}")
-    
+
     # Generate JSON report
     json_report = generate_json_report(analysis, output_dir)
     print(f"  ✅ JSON Report: {json_report}")
-    
+
     # Generate text report
     text_report = generate_text_report(analysis, output_dir)
     print(f"  ✅ Text Report: {text_report}")
-    
+
     # Generate enhanced failure report if requested
     if args.enhanced:
         failure_report = analyzer.generate_failure_report(test_results)
@@ -929,7 +942,7 @@ Examples:
         with open(failure_report_path, 'w', encoding='utf-8') as f:
             json.dump(failure_report, f, indent=2)
         print(f"  ✅ Failure Analysis: {failure_report_path}")
-        
+
         # Show recommendations
         recommendations = failure_report.get('recommendations', [])
         if recommendations:
@@ -937,18 +950,19 @@ Examples:
             for rec in recommendations:
                 print(f"  {rec['priority']} PRIORITY: {rec['area']} ({rec['count']} issues)")
                 print(f"    → {rec['action']}")
-    
+
     print("\n" + "=" * 60)
     print("✅ Analysis completed successfully!")
     print(f"📂 Reports saved to: {output_dir.absolute()}")
     print("=" * 60)
-    
+
     # Email-friendly report guidance
     print("\n📧 Email-Ready Reports Generated:")
     print(f"  • HTML Report: Open {exec_summary_html.name} in browser and send as email")
     print(f"  • Plain Text: Copy content from {exec_summary_email.name} for email body")
     print(f"  • Attachment: Attach the HTML file to your email for stakeholders")
     print("")
+
 
 if __name__ == "__main__":
     try:
